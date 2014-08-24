@@ -5,7 +5,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.example.dream.englishlistening.R;
 import com.example.dream.englishlistening.domain.ArticleCollection;
@@ -48,10 +47,10 @@ public class CollectionAdapter extends BaseAdapter {
         }
 
         ImageView thumbnail = (ImageView) view.findViewById(R.id.smallThumbnail);
-        TextView content = (TextView) view.findViewById(R.id.content);
+//        TextView content = (TextView) view.findViewById(R.id.content);
         ArticleCollection articleCollection = (ArticleCollection) getItem(i);
         ImageLoader.getInstance().displayImage(articleCollection.getImageThumbnail(), thumbnail);
-        content.setText(articleCollection.getTitle());
+//        content.setText(articleCollection.getTitle());
         return view;
     }
 }

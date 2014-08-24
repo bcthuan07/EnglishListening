@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -28,7 +30,7 @@ public class MainActivity extends Activity implements OnTaskComplete {
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private String[] mData = {"Collection", "Audio"};
-    private ListView listView;
+    private GridView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +44,7 @@ public class MainActivity extends Activity implements OnTaskComplete {
         //set drawer
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerList = (ListView) findViewById(R.id.left_drawer);
-        listView = (ListView) findViewById(R.id.listItems);
+        listView = (GridView) findViewById(R.id.listItems);
         loadNavigation();
 
         //init ImageLoader
@@ -85,7 +87,10 @@ public class MainActivity extends Activity implements OnTaskComplete {
                 if (input.equals(mData[0])) {
                     intent = new Intent(getApplicationContext(), CollectionListViewActivity.class);
                 } else if (input.equals(mData[1])) {
-
+                    Bundle bundle = new Bundle();
+                    bundle.putBoolean(ArticleCollectionViewActivity.LOADED, true);
+                    intent = new Intent(getApplicationContext(), ArticleCollectionViewActivity.class);
+                    intent.putExtra(ArticleCollectionViewActivity.DATA_BUNDLE, bundle);
                 }
                 startActivity(intent);
             }
@@ -99,6 +104,8 @@ public class MainActivity extends Activity implements OnTaskComplete {
      */
     @Override
     public void onCompleteTask(Object data) {
-        listView.setAdapter(new ArticleAdapter((ArrayList<Article>) data, this));
+        BaseAdapter adapter = new ArticleAdapter(((ArrayList<Article>) data), this);
+        listView.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
     }
 }

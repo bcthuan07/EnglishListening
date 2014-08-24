@@ -2,7 +2,10 @@ package com.example.dream.englishlistening.task;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.util.Log;
+import android.widget.Toast;
 
+import com.example.dream.englishlistening.activity.ArticleViewActivity;
 import com.example.dream.englishlistening.util.HttpRequest;
 
 import java.io.BufferedOutputStream;
@@ -58,10 +61,13 @@ public class DownloadTask extends AsyncTask<String, Void, File> {
 
     @Override
     protected void onPostExecute(File file) {
+        Log.e("FILE DOWNLOAD", file.getPath());
         if (file != null) {
+            ArticleViewActivity.DOWNLOAD_PROGRESS++;
             task.onCompleteTask(file);
+            Toast.makeText(context, "Downloaded", Toast.LENGTH_LONG);
         } else {
-
+            Toast.makeText(context, "Can't download", Toast.LENGTH_LONG);
         }
     }
 }

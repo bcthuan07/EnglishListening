@@ -20,11 +20,13 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "Article.db";
     public static final String[] projection = {
             ArticleEntry.COLUMN_NAME_TITLE,
+            ArticleEntry.COLUMN_NAME_CONTENT,
+            ArticleEntry.COLUMN_NAME_SOUND_URL,
             ArticleEntry.COLUMN_NAME_THUMBNAIL_CAPTION,
             ArticleEntry.COLUMN_NAME_THUMBNAIL_LARGE,
-            ArticleEntry.COLUMN_NAME_CONTENT,
             ArticleEntry.COLUMN_NAME_THUMBNAIL_SMALL,
-            ArticleEntry.COLUMN_NAME_SOUND_URL
+            ArticleEntry.COLUMN_NAME_DATE,
+            ArticleEntry.COLUMN_NAME_LINK
     };
     private static final String TEXT_TYPE = " TEXT";
     private static final String COMMA_SEP = ",";
@@ -38,8 +40,8 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
                     ArticleEntry.COLUMN_NAME_THUMBNAIL_LARGE + TEXT_TYPE + COMMA_SEP +
                     ArticleEntry.COLUMN_NAME_THUMBNAIL_CAPTION + TEXT_TYPE + COMMA_SEP +
                     ArticleEntry.COLUMN_NAME_DATE + TEXT_TYPE + COMMA_SEP +
-                    ArticleEntry.COLUMN_NAME_NULLABLE + TEXT_TYPE
-                    + " )";
+                    ArticleEntry.COLUMN_NAME_LINK + TEXT_TYPE
+                    + ArticleEntry.COLUMN_NAME_NULLABLE + TEXT_TYPE + " )";
     private static final String SQL_DELETE_ENTRIES = "DROP TABLE IF EXISTS " + ArticleEntry.TABLE_NAME;
 
     public FeedReaderDbHelper(Context context) {
@@ -69,8 +71,7 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
 
         Cursor cursor = db.query(ArticleEntry.TABLE_NAME, projection, null, null, null, null, null);
         while (cursor.moveToNext()) {
-            list.add(new Article(cursor.getString(1), "", cursor.getString(4), cursor.getString(5), cursor.getString(3),
-                    "", cursor.getString(6), cursor.getString(2)));
+            list.add(toArticle(cursor));
         }
         cursor.close();
         return list;
@@ -86,7 +87,7 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
         values.put(ArticleEntry.COLUMN_NAME_THUMBNAIL_LARGE, article.getLargeThumbnail());
         values.put(ArticleEntry.COLUMN_NAME_THUMBNAIL_SMALL, article.getSmallThumbnail());
         values.put(ArticleEntry.COLUMN_NAME_TITLE, article.getTitle());
-
+        values.put(ArticleEntry.COLUMN_NAME_LINK, article.getLink());
         long newRowId;
         newRowId = db.insert(ArticleEntry.TABLE_NAME, ArticleEntry.COLUMN_NAME_NULLABLE, values);
         if (newRowId == -1) {
@@ -103,11 +104,20 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
     private Article toArticle(Cursor cur) {
         Article article = new Article();
         article.setTitle(cur.getString(0));
-        article.setThumbnailCaption(cur.getString(1));
-        article.setLargeThumbnail(cur.getString(2));
-        article.setContent(cur.getString(3));
-        article.setSmallThumbnail(cur.getString(4));
-        article.setSound(cur.getString(5));
+        article.setContent(cur.getString(1));
+        article.setSound(cur.getString(2));
+        article.setThumbnailCaption(cur.getString(3));
+        article.setLargeThumbnail(cur.getString(4));
+        article.setSmallThumbnail(cur.getString(5));
+        article.setDate(cur.getString(6));
+        article.setLink(cur.getString(7));
         return article;
+    }
+
+    public Article getArticle(String title) {
+        Cursor cur = getReadableDatabase().query(ArticleEntry.TABLE_NAME, projection, ArticleEntry.COLUMN_NAME_TITLE + " = '" + title + "'", null, null, null, null);
+        cur.moveToFirst();
+        Article ret = toArticle(cur);
+        return ret;
     }
 }

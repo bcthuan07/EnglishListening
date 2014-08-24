@@ -5,7 +5,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.example.dream.englishlistening.R;
 import com.example.dream.englishlistening.domain.Article;
@@ -47,10 +46,10 @@ public class ArticleAdapter extends BaseAdapter {
             view = activity.getLayoutInflater().inflate(R.layout.article_view, null);
         }
         ImageView thumbnail = (ImageView) view.findViewById(R.id.smallThumbnail);
-        TextView content = (TextView) view.findViewById(R.id.content);
+//        TextView content = (TextView) view.findViewById(R.id.content);
         Article article = (Article) getItem(position);
         ImageLoader.getInstance().displayImage(article.getSmallThumbnail(), thumbnail);
-        content.setText(article.getTitle());
+//        content.setText(article.getTitle());
         return view;
     }
 }

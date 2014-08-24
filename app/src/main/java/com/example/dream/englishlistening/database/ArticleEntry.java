@@ -14,4 +14,5 @@ public class ArticleEntry {
     public static final String COLUMN_NAME_THUMBNAIL_CAPTION = "thumbnail_caption";
     public static final String COLUMN_NAME_DATE = "date";
     public static final String COLUMN_NAME_NULLABLE = "nullable";
+    public static final String COLUMN_NAME_LINK = "link";
 }

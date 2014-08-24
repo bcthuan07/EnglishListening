@@ -37,12 +37,13 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
     public static final String ARTICLE = "article_downloaded";
     public static final String ARTICLE_SMALL_THUMBNAIL = "article_small_thumbnail";
     public static final String ARTICLE_TITLE = "article_title";
+    public static byte DOWNLOAD_PROGRESS = 0;
     private MediaPlayer mediaPlayer;
     private ImageButton playBtn, pauseBtn;
     private SeekBar progressSb;
     private ImageView thumbnail;
     private TextView content, timeLeft, timeTotal, thumbnailCaption;
-    private ProgressBar loadSoundPg, loadArticle;
+    private ProgressBar loadSoundPg, loadArticle, downloadProgessBar;
     private Article article;
     private Thread thread;
     private int currentPositionMedia = 0;
@@ -57,7 +58,10 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
         super.onCreate(savedInstanceState);
         setContentView(R.layout.article_detail_view);
         getActionBar().hide();
+
+        //init component
         mediaPlayer = new MediaPlayer();
+        initComponent();
 
         Bundle bundle = getIntent().getBundleExtra(DATA);
         downloaded = bundle.getBoolean(DOWNLOADED);
@@ -69,7 +73,7 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
             this.article = (Article) bundle.getSerializable(ARTICLE);
             articleLoaded();
         }
-        initComponent();
+
         run = new Runnable() {
             @Override
             public void run() {
@@ -106,6 +110,7 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
         content = (TextView) findViewById(R.id.contentDetail);
         progressSb = (SeekBar) findViewById(R.id.seekBarLength);
         loadSoundPg = (ProgressBar) findViewById(R.id.loadSoundPg);
+        downloadProgessBar = (ProgressBar) findViewById(R.id.downloadProgressBar);
         pauseBtn = (ImageButton) findViewById(R.id.pauseBtn);
         loadArticle = (ProgressBar) findViewById(R.id.articleLoadPb);
         timeTotal = (TextView) findViewById(R.id.timeTotal);
@@ -127,15 +132,22 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
      */
     private void saveArticle() {
 
-        Log.e("DOWNLOAD LINK", article.getSound());
-        Log.e("DOWNLOAD LINK", article.getLargeThumbnail());
-        Log.e("DOWNLOAD LINK", article.getSmallThumbnail());
+        saveArticleBtn.setVisibility(View.GONE);
+        downloadProgessBar.setVisibility(View.VISIBLE);
         new DownloadTask(getApplicationContext(), this).execute(this.article.getSound(), Constant.TYPE_SOUND, this.article.getTitle() + ".mp3");
         new DownloadTask(getApplicationContext(), this).execute(this.article.getLargeThumbnail(), Constant.TYPE_IMAGE, this.article.getTitle() + "-small.jpg");
         new DownloadTask(getApplicationContext(), this).execute(this.article.getSmallThumbnail(), Constant.TYPE_IMAGE, this.article.getTitle() + "-large.jpg");
 
+        while (true) {
+            if (DOWNLOAD_PROGRESS == 3) {
+                break;
+            }
+        }
         //Luu xuong co so du lieu
         new FeedReaderDbHelper(this).saveArticle(article);
+        DOWNLOAD_PROGRESS = 0;
+        Log.e("LARGE THUMBNAIL", article.getLargeThumbnail());
+        downloadProgessBar.setVisibility(View.GONE);
     }
 
 
@@ -146,7 +158,7 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
         backBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                finish();
             }
         });
         playBtn.setOnClickListener(new View.OnClickListener() {
@@ -261,15 +273,14 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
 
             articleLoaded();
         } else if (data instanceof File) {
-            if (this.article != null) {
-                File file = (File) data;
-                if (file.getPath().endsWith(".mp3")) {
-                    this.article.setSound(file.getPath());
-                } else if (file.getPath().endsWith("-large.jpg")) {
-                    this.article.setLargeThumbnail(file.getPath());
-                } else if (file.getPath().endsWith("-small.jpg")) {
-                    this.article.setSmallThumbnail(file.getPath());
-                }
+            File file = (File) data;
+            String fileName = file.getName();
+            if (fileName.endsWith(".mp3")) {
+                this.article.setSound(file.getPath());
+            } else if (fileName.endsWith("-large.jpg")) {
+                this.article.setLargeThumbnail(file.getPath());
+            } else if (fileName.endsWith("-small.jpg")) {
+                this.article.setSmallThumbnail(file.getPath());
             }
         }
 

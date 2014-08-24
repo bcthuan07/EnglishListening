@@ -40,7 +40,7 @@ public class ArticleWorkerTask extends AsyncTask<String, Void, ArrayList<Article
         if (type.equals(ONLINE)) {
             list = loadArticleOnline(url);
         } else if (type.equals(DATABASE)) {
-            loadArticleFromDatabase();
+            list = loadArticleFromDatabase();
         }
         return list;
     }

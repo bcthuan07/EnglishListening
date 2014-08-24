@@ -5,7 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ListView;
+import android.widget.GridView;
+import android.widget.TextView;
 
 import com.example.dream.englishlistening.R;
 import com.example.dream.englishlistening.adapter.CollectionAdapter;
@@ -21,24 +22,28 @@ import java.util.ArrayList;
  */
 public class CollectionListViewActivity extends Activity implements OnTaskComplete {
 
-    private ListView listView;
+    private GridView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.item_list_view);
         getActionBar().hide();
-        listView = (ListView) findViewById(R.id.listItems);
+        listView = (GridView) findViewById(R.id.listItems);
+
+        //set title
+        ((TextView) findViewById(R.id.titleTop)).setText("Collection");
+
         //load collection
         new ArticleCollectionTask(this).execute(Constant.COLLECTION_LINK);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 ArticleCollection articleCollection = (ArticleCollection) adapterView.getItemAtPosition(i);
-                String link = articleCollection.getLink();
                 Intent intent = new Intent(getApplicationContext(), ArticleCollectionViewActivity.class);
                 Bundle bundle = new Bundle();
-                bundle.putString(ArticleCollectionViewActivity.DATA_LINK, link);
+                bundle.putString(ArticleCollectionViewActivity.DATA_LINK, articleCollection.getLink());
+                bundle.putString(ArticleCollectionViewActivity.COLLECTION_NAME, articleCollection.getTitle());
                 intent.putExtra(ArticleCollectionViewActivity.DATA_BUNDLE, bundle);
                 startActivity(intent);
             }
