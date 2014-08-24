@@ -7,10 +7,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ListView;
+import android.widget.GridView;
+import android.widget.TextView;
 
 import com.example.dream.englishlistening.R;
 import com.example.dream.englishlistening.adapter.ArticleAdapter;
+import com.example.dream.englishlistening.database.FeedReaderDbHelper;
 import com.example.dream.englishlistening.domain.Article;
 import com.example.dream.englishlistening.task.ArticleWorkerTask;
 import com.example.dream.englishlistening.task.OnTaskComplete;
@@ -23,7 +25,8 @@ public class ArticleCollectionViewActivity extends Activity implements OnTaskCom
     public static final String DATA_LINK = "data_link";
     public static final String DATA_BUNDLE = "data_bundle_send";
     public static final String LOADED = "data_loaded";
-    private ListView listView;
+    public static final String COLLECTION_NAME = "collection";
+    private GridView listView;
 
     private boolean loaded;
 
@@ -32,28 +35,36 @@ public class ArticleCollectionViewActivity extends Activity implements OnTaskCom
         super.onCreate(savedInstanceState);
         getActionBar().hide();
         setContentView(R.layout.item_list_view);
-        listView = (ListView) findViewById(R.id.listItems);
+        listView = (GridView) findViewById(R.id.listItems);
 
         Bundle bundle = getIntent().getBundleExtra(DATA_BUNDLE);
+        String dataLink = bundle.getString(DATA_LINK);
         loaded = bundle.getBoolean(LOADED);
-        if (loaded) {
+
+        //load articles
+        if (loaded) {//from database
             new ArticleWorkerTask(this, this).execute("", ArticleWorkerTask.DATABASE);
-        } else {
-            new ArticleWorkerTask(this, this).execute("http://learningenglish.voanews.com/archive/as-it-is/latest/3521/3521.html", ArticleWorkerTask.ONLINE);
+        } else { //from link
+            ((TextView) findViewById(R.id.titleTop)).setText(bundle.getString(COLLECTION_NAME));
+            new ArticleWorkerTask(this, this).execute(dataLink, ArticleWorkerTask.ONLINE);
         }
+
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Article article = (Article) adapterView.getItemAtPosition(i);
                 Intent intent = new Intent(getApplicationContext(), ArticleViewActivity.class);
                 Bundle bundle = new Bundle();
-                bundle.putString(ArticleViewActivity.LINK, article.getLink());
-                bundle.putString(ArticleViewActivity.ARTICLE_SMALL_THUMBNAIL, article.getSmallThumbnail());
-                bundle.putString(ArticleViewActivity.ARTICLE_TITLE, article.getTitle());
-                bundle.putBoolean(ArticleViewActivity.DOWNLOADED, false);
+                if (!loaded) {//from link
+                    bundle.putString(ArticleViewActivity.LINK, article.getLink());
+                    bundle.putString(ArticleViewActivity.ARTICLE_SMALL_THUMBNAIL, article.getSmallThumbnail());
+                    bundle.putString(ArticleViewActivity.ARTICLE_TITLE, article.getTitle());
+                } else { //from database
+                    bundle.putSerializable(ArticleViewActivity.ARTICLE, new FeedReaderDbHelper(getApplicationContext()).getArticle(article.getTitle()));
+                }
+                bundle.putBoolean(ArticleViewActivity.DOWNLOADED, loaded);
                 intent.putExtra(ArticleViewActivity.DATA, bundle);
                 startActivity(intent);
-                finish();
             }
         });
     }
