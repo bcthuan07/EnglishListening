@@ -4,11 +4,9 @@ import android.app.Activity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
 
 import com.example.dream.englishlistening.R;
 import com.example.dream.englishlistening.domain.ArticleCollection;
-import com.nostra13.universalimageloader.core.ImageLoader;
 
 import java.util.ArrayList;
 
@@ -46,10 +44,10 @@ public class CollectionAdapter extends BaseAdapter {
             view = activity.getLayoutInflater().inflate(R.layout.article_view, null);
         }
 
-        ImageView thumbnail = (ImageView) view.findViewById(R.id.smallThumbnail);
+//        ImageView thumbnail = (ImageView) view.findViewById(R.id.smallThumbnail);
 //        TextView content = (TextView) view.findViewById(R.id.content);
-        ArticleCollection articleCollection = (ArticleCollection) getItem(i);
-        ImageLoader.getInstance().displayImage(articleCollection.getImageThumbnail(), thumbnail);
+//        ArticleCollection articleCollection = (ArticleCollection) getItem(i);
+//        ImageLoader.getInstance().displayImage(articleCollection.getImageThumbnail(), thumbnail);
 //        content.setText(articleCollection.getTitle());
         return view;
     }

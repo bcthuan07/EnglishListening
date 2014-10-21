@@ -36,8 +36,8 @@ public class ArticleCollectionTask extends AsyncTask<String, Void, ArrayList<Art
                 if (e.select("div.programlist_rowimagedesc h4 a").first() != null) {
                     String title = e.select("div.programlist_rowimagedesc h4 a").first().text();
                     String content = e.select("div.programlist_rowimagedesc p").text();
-                    String imageThumbnail = e.select("a img.programlist_rowimage").attr("src").toString();
-                    String link = e.select("div.media_links > ul > li.playlistlink > a.linksmall.listico").attr("href").toString();
+                    String imageThumbnail = e.select("a img.programlist_rowimage").attr("src");
+                    String link = e.select("div.media_links > ul > li.playlistlink > a.linksmall.listico").attr("href");
                     list.add(new ArticleCollection(title, content, imageThumbnail, link));
                 }
             }
@@ -57,5 +57,6 @@ public class ArticleCollectionTask extends AsyncTask<String, Void, ArrayList<Art
         task.onCompleteTask(articleCollections);
 
     }
+
 
 }

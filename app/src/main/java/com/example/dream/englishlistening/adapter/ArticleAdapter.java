@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.example.dream.englishlistening.R;
 import com.example.dream.englishlistening.domain.Article;
@@ -42,14 +43,25 @@ public class ArticleAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View view, ViewGroup viewGroup) {
+        ArticleViewHolder holder;
         if (view == null) {
             view = activity.getLayoutInflater().inflate(R.layout.article_view, null);
+            holder = new ArticleViewHolder();
+            holder.thumbnail = (ImageView) view.findViewById(R.id.smallThumbnail);
+            holder.content = (TextView) view.findViewById(R.id.titleArticle);
+            view.setTag(holder);
+        } else {
+            holder = (ArticleViewHolder) view.getTag();
         }
-        ImageView thumbnail = (ImageView) view.findViewById(R.id.smallThumbnail);
-//        TextView content = (TextView) view.findViewById(R.id.content);
         Article article = (Article) getItem(position);
-        ImageLoader.getInstance().displayImage(article.getSmallThumbnail(), thumbnail);
-//        content.setText(article.getTitle());
+        holder.content.setText(article.getTitle());
+        ImageLoader.getInstance().displayImage(article.getSmallThumbnail(), holder.thumbnail);
         return view;
+    }
+
+    static class ArticleViewHolder {
+        ImageView thumbnail;
+        TextView content;
+
     }
 }

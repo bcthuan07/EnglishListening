@@ -4,8 +4,11 @@ import android.app.Activity;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -14,30 +17,20 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.example.dream.englishlistening.R;
-import com.example.dream.englishlistening.database.FeedReaderDbHelper;
 import com.example.dream.englishlistening.domain.Article;
 import com.example.dream.englishlistening.task.DownloadTask;
-import com.example.dream.englishlistening.task.OnTaskComplete;
 import com.example.dream.englishlistening.task.SingleArticleWorkTask;
-import com.example.dream.englishlistening.util.Constant;
 import com.example.dream.englishlistening.util.Util;
 import com.nostra13.universalimageloader.core.ImageLoader;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.TimerTask;
 
 /**
  * Created by bcthuan07 on 8/6/2014.
  */
-public class ArticleViewActivity extends Activity implements OnTaskComplete, MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnBufferingUpdateListener {
+public class ArticleViewFragment extends Fragment implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, SingleArticleWorkTask.ArticleLoaded {
 
-    public static final String LINK = "link_article";
-    public static final String DATA = "data_article";
-    public static final String DOWNLOADED = "sound_downloaded";
-    public static final String ARTICLE = "article_downloaded";
-    public static final String ARTICLE_SMALL_THUMBNAIL = "article_small_thumbnail";
-    public static final String ARTICLE_TITLE = "article_title";
-    public static byte DOWNLOAD_PROGRESS = 0;
     private MediaPlayer mediaPlayer;
     private ImageButton playBtn, pauseBtn;
     private SeekBar progressSb;
@@ -45,111 +38,79 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
     private TextView content, timeLeft, timeTotal, thumbnailCaption;
     private ProgressBar loadSoundPg, loadArticle, downloadProgessBar;
     private Article article;
-    private Thread thread;
     private int currentPositionMedia = 0;
-    private Runnable run;
     private boolean isRunning, downloaded;
     private Button saveArticleBtn, backBtn;
-    private String smallThumbnailLink;
-    private String title;
+    private OnBack listener;
+    private TimerTask updateTime;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.article_detail_view);
-        getActionBar().hide();
-
-        //init component
-        mediaPlayer = new MediaPlayer();
-        initComponent();
-
-        Bundle bundle = getIntent().getBundleExtra(DATA);
-        downloaded = bundle.getBoolean(DOWNLOADED);
-        smallThumbnailLink = bundle.getString(ARTICLE_SMALL_THUMBNAIL);
-        title = bundle.getString(ARTICLE_TITLE);
-        if (!downloaded) {
-            new SingleArticleWorkTask(this).execute(bundle.getString(LINK), String.valueOf(downloaded));
-        } else {
-            this.article = (Article) bundle.getSerializable(ARTICLE);
-            articleLoaded();
-        }
-
-        run = new Runnable() {
-            @Override
-            public void run() {
-                int total = mediaPlayer.getDuration();
-                currentPositionMedia = mediaPlayer.getCurrentPosition();
-                while (true)
-                    while (mediaPlayer != null && currentPositionMedia < total && !Thread.interrupted() && isRunning) {
-                        try {
-                            Thread.sleep(1000);
-                            currentPositionMedia = mediaPlayer.getCurrentPosition();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        } catch (Exception e) {
-                        }
-                        progressSb.setProgress(currentPositionMedia);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                timeLeft.setText(Util.convertTime(currentPositionMedia));
-                            }
-                        });
-                    }
-            }
-        };
-        addListener();
-
+    public void download(boolean downloaded) {
+        this.downloaded = downloaded;
     }
 
+    public void setArticle(Article article) {
+        this.article = article;
+    }
 
-    private void initComponent() {
-        backBtn = (Button) findViewById(R.id.backBtn);
-        playBtn = (ImageButton) findViewById(R.id.playBtn);
-        thumbnail = (ImageView) findViewById(R.id.largeThumbnailDetail);
-        content = (TextView) findViewById(R.id.contentDetail);
-        progressSb = (SeekBar) findViewById(R.id.seekBarLength);
-        loadSoundPg = (ProgressBar) findViewById(R.id.loadSoundPg);
-        downloadProgessBar = (ProgressBar) findViewById(R.id.downloadProgressBar);
-        pauseBtn = (ImageButton) findViewById(R.id.pauseBtn);
-        loadArticle = (ProgressBar) findViewById(R.id.articleLoadPb);
-        timeTotal = (TextView) findViewById(R.id.timeTotal);
-        timeLeft = (TextView) findViewById(R.id.timeLeft);
-
-        saveArticleBtn = (Button) findViewById(R.id.saveArticleBtn);
-        if (!downloaded) {
-            saveArticleBtn.setVisibility(View.VISIBLE);
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        if (activity instanceof OnBack) {
+            listener = (OnBack) activity;
+        } else {
+            throw new ClassCastException(activity.toString() + " must implement ArticleViewFragment.OnBack");
         }
+    }
 
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.article_detail_view, null);
+        mediaPlayer = new MediaPlayer();
+        initComponent(view);
 
-        thumbnailCaption = (TextView) findViewById(R.id.thumbnailCaption);
+        updateTime = new TimerTask() {
+            @Override
+            public void run() {
+                timeLeft.setText(Util.convertTime(mediaPlayer.getCurrentPosition()));
+            }
+        };
 
+        addListener();
+//        articleLoaded();
+        return view;
+    }
 
+    private void initComponent(View view) {
+        backBtn = (Button) view.findViewById(R.id.backBtn);
+        playBtn = (ImageButton) view.findViewById(R.id.playBtn);
+        thumbnail = (ImageView) view.findViewById(R.id.largeThumbnailDetail);
+        content = (TextView) view.findViewById(R.id.contentDetail);
+        progressSb = (SeekBar) view.findViewById(R.id.seekBarLength);
+        loadSoundPg = (ProgressBar) view.findViewById(R.id.loadSoundPg);
+        downloadProgessBar = (ProgressBar) view.findViewById(R.id.downloadProgressBar);
+        pauseBtn = (ImageButton) view.findViewById(R.id.pauseBtn);
+        loadArticle = (ProgressBar) view.findViewById(R.id.articleLoadPb);
+        timeTotal = (TextView) view.findViewById(R.id.timeTotal);
+        timeLeft = (TextView) view.findViewById(R.id.timeLeft);
+
+        saveArticleBtn = (Button) view.findViewById(R.id.saveArticleBtn);
+        if (!downloaded) {
+            new SingleArticleWorkTask(this).execute(this.article.getLink());
+            saveArticleBtn.setVisibility(View.VISIBLE);
+        } else {
+            articleLoaded();
+        }
+        thumbnailCaption = (TextView) view.findViewById(R.id.thumbnailCaption);
     }
 
     /**
      * Save article
      */
     private void saveArticle() {
-
         saveArticleBtn.setVisibility(View.GONE);
         downloadProgessBar.setVisibility(View.VISIBLE);
-        new DownloadTask(getApplicationContext(), this).execute(this.article.getSound(), Constant.TYPE_SOUND, this.article.getTitle() + ".mp3");
-        new DownloadTask(getApplicationContext(), this).execute(this.article.getLargeThumbnail(), Constant.TYPE_IMAGE, this.article.getTitle() + "-small.jpg");
-        new DownloadTask(getApplicationContext(), this).execute(this.article.getSmallThumbnail(), Constant.TYPE_IMAGE, this.article.getTitle() + "-large.jpg");
-
-        while (true) {
-            if (DOWNLOAD_PROGRESS == 3) {
-                break;
-            }
-        }
-        //Luu xuong co so du lieu
-        new FeedReaderDbHelper(this).saveArticle(article);
-        DOWNLOAD_PROGRESS = 0;
-        Log.e("LARGE THUMBNAIL", article.getLargeThumbnail());
-        downloadProgessBar.setVisibility(View.GONE);
+        new DownloadTask(getActivity()).execute(article);
     }
-
 
     /**
      * Add listener for component
@@ -158,7 +119,7 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
         backBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                finish();
+                listener.onBack();
             }
         });
         playBtn.setOnClickListener(new View.OnClickListener() {
@@ -200,7 +161,7 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
                 if (null != mediaPlayer && b) {
                     mediaPlayer.seekTo(i);
                     currentPositionMedia = mediaPlayer.getCurrentPosition();
-                    timeLeft.setText(Util.convertTime(currentPositionMedia));
+                    updateTime.run();
                 }
             }
 
@@ -222,7 +183,7 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
                 if (mediaPlayer != null) {
                     mediaPlayer.seekTo(progress);
                     currentPositionMedia = mediaPlayer.getCurrentPosition();
-                    timeLeft.setText(Util.convertTime(currentPositionMedia));
+                    updateTime.run();
                 }
             }
         });
@@ -240,7 +201,6 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
             mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         try {
             mediaPlayer.setDataSource(link);
-            mediaPlayer.setOnBufferingUpdateListener(this);
             mediaPlayer.setOnPreparedListener(this);
             mediaPlayer.setOnCompletionListener(this);
             if (downloaded)
@@ -252,38 +212,11 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
         }
     }
 
-
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
-        if (thread != null && thread.isAlive()) {
-            thread.interrupt();
-        }
         mediaPlayer.release();
         mediaPlayer = null;
-    }
-
-    @Override
-    public void onCompleteTask(Object data) {
-        Log.v("COMPLETE LOAD ARTICLE", "LOADED");
-        if (data instanceof Article) {
-            this.article = (Article) data;
-            this.article.setSmallThumbnail(smallThumbnailLink);
-            this.article.setTitle(title);
-
-            articleLoaded();
-        } else if (data instanceof File) {
-            File file = (File) data;
-            String fileName = file.getName();
-            if (fileName.endsWith(".mp3")) {
-                this.article.setSound(file.getPath());
-            } else if (fileName.endsWith("-large.jpg")) {
-                this.article.setLargeThumbnail(file.getPath());
-            } else if (fileName.endsWith("-small.jpg")) {
-                this.article.setSmallThumbnail(file.getPath());
-            }
-        }
-
     }
 
     private void articleLoaded() {
@@ -296,12 +229,6 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
         this.thumbnailCaption.setVisibility(View.VISIBLE);
     }
 
-
-    @Override
-    public void onBufferingUpdate(MediaPlayer mediaPlayer, int i) {
-
-    }
-
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
         this.pauseBtn.setVisibility(View.GONE);
@@ -311,9 +238,8 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
     }
 
     @Override
-    public void onPrepared(MediaPlayer mediaPlayer) {
+    public void onPrepared(final MediaPlayer mediaPlayer) {
         if (!mediaPlayer.isPlaying()) {
-            Log.e("Media Player Duration", String.valueOf(mediaPlayer.getDuration()));
             progressSb.setVisibility(View.INVISIBLE);
             timeTotal.setText(Util.convertTime(mediaPlayer.getDuration()));
             mediaPlayer.start();
@@ -322,10 +248,44 @@ public class ArticleViewActivity extends Activity implements OnTaskComplete, Med
             progressSb.setVisibility(View.VISIBLE);
             progressSb.setMax(mediaPlayer.getDuration());
             isRunning = true;
-            thread = new Thread(run);
-            thread.start();
+//            thread = new Thread(run);
+
+//            thread.start();
+
+            TimerTask play = new TimerTask() {
+                @Override
+                public void run() {
+                    int total = mediaPlayer.getDuration();
+                    currentPositionMedia = mediaPlayer.getCurrentPosition();
+                    while (true) {
+                        while (mediaPlayer != null && currentPositionMedia < total && !Thread.interrupted() && isRunning) {
+                            try {
+                                Thread.sleep(1000);
+                                currentPositionMedia = mediaPlayer.getCurrentPosition();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            progressSb.setProgress(currentPositionMedia);
+                            timeLeft.setText(Util.convertTime(currentPositionMedia));
+                        }
+                    }
+                }
+            };
+
         } else {
 
         }
+    }
+
+    @Override
+    public void getArticle(Article article) {
+        this.article = article;
+        articleLoaded();
+    }
+
+    public interface OnBack {
+        void onBack();
     }
 }

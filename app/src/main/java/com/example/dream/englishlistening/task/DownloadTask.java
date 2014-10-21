@@ -1,55 +1,41 @@
 package com.example.dream.englishlistening.task;
 
-import android.content.Context;
+import android.app.Activity;
 import android.os.AsyncTask;
-import android.util.Log;
-import android.widget.Toast;
+import android.view.View;
+import android.widget.ProgressBar;
 
-import com.example.dream.englishlistening.activity.ArticleViewActivity;
-import com.example.dream.englishlistening.util.HttpRequest;
+import com.example.dream.englishlistening.R;
+import com.example.dream.englishlistening.database.FeedReaderDbHelper;
+import com.example.dream.englishlistening.domain.Article;
+import com.example.dream.englishlistening.util.Util;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 
 /**
  * Created by bcthuan07 on 8/12/2014.
  */
-public class DownloadTask extends AsyncTask<String, Void, File> {
+public class DownloadTask extends AsyncTask<Article, Void, Void> {
 
-    private Context context;
-    private OnTaskComplete task;
+    private Activity context;
 
-    public DownloadTask(Context context, OnTaskComplete task) {
+    public DownloadTask(Activity context) {
         this.context = context;
-        this.task = task;
     }
 
     @Override
-    protected File doInBackground(String... strings) {
-
-        String url = strings[0];
-        String type = strings[1];
-        String name = strings[2];
-        File file = null;
-        checkFileDir(type);
-        try {
-            file = new File(context.getFilesDir().getPath() + "/" + type + "/" + name);
-            HttpRequest request = HttpRequest.get(url);
-            OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
-            request.receive(out);
-            out.flush();
-            out.close();
-            return file;
-        } catch (HttpRequest.HttpRequestException e) {
-            e.printStackTrace();
-            return null;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
+    protected Void doInBackground(Article... articles) {
+        Article article = articles[0];
+        checkFileDir("image");
+        checkFileDir("sound");
+        Util.downloadFile(article.getSound(), context.getFilesDir().getPath() + "/sound/" + article.getTitle().trim() + ".mp3");
+        Util.downloadFile(article.getLargeThumbnail(), context.getFilesDir().getPath() + "/image/" + article.getTitle().trim() + "-large.jpg");
+        Util.downloadFile(article.getSmallThumbnail(), context.getFilesDir().getPath() + "/image/" + article.getTitle().trim() + "-small.jpg");
+        article.setSound(context.getFilesDir().getPath() + "/sound/" + article.getTitle().trim() + ".mp3");
+        article.setSmallThumbnail(context.getFilesDir().getPath() + "/image/" + article.getTitle().trim() + "-small.jpg");
+        article.setLargeThumbnail(context.getFilesDir().getPath() + "/image/" + article.getTitle().trim() + "-large.jpg");
+        new FeedReaderDbHelper(context).saveArticle(article);
+        return null;
     }
 
     private void checkFileDir(String type) {
@@ -60,14 +46,7 @@ public class DownloadTask extends AsyncTask<String, Void, File> {
     }
 
     @Override
-    protected void onPostExecute(File file) {
-        Log.e("FILE DOWNLOAD", file.getPath());
-        if (file != null) {
-            ArticleViewActivity.DOWNLOAD_PROGRESS++;
-            task.onCompleteTask(file);
-            Toast.makeText(context, "Downloaded", Toast.LENGTH_LONG);
-        } else {
-            Toast.makeText(context, "Can't download", Toast.LENGTH_LONG);
-        }
+    protected void onPostExecute(Void aVoid) {
+        ((ProgressBar) context.findViewById(R.id.downloadProgressBar)).setVisibility(View.GONE);
     }
 }

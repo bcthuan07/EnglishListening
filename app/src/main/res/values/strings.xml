@@ -9,6 +9,13 @@
     <string name="audio">Audio</string>
     <string name="time">--:--</string>
     <string name="separate">/</string>
-    <string name="drawer_open"></string>
-    <string name="drawer_close"></string>
+    <string name="drawer_open">Open</string>
+    <string name="drawer_close">Close</string>
+    <string-array name="drawer_options">
+        <item>News</item>
+        <item>Collections</item>
+        <item>Game</item>
+        <item>Dictionary</item>
+    </string-array>
+
 </resources>

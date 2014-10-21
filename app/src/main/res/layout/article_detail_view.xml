@@ -19,7 +19,7 @@
             android:layout_gravity="center_vertical"
             android:background="@drawable/btn_default_holo_light"
             android:text="Back"
-            android:textColor="@color/White"
+            android:textColor="@color/white"
             android:textStyle="bold"
             android:visibility="visible"
 
@@ -34,7 +34,7 @@
             android:gravity="center"
             android:padding="5dp"
             android:text="@string/audio"
-            android:textColor="@color/White"
+            android:textColor="@color/white"
             android:textSize="25dp"
             android:textStyle="bold" />
 
@@ -46,7 +46,7 @@
             android:layout_gravity="center_vertical"
             android:background="@drawable/btn_default_holo_light"
             android:text="Save"
-            android:textColor="@color/White"
+            android:textColor="@color/white"
             android:textStyle="bold"
             android:visibility="visible"
 
@@ -87,7 +87,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:textColor="@color/Gray"
+                android:textColor="@color/lynch"
                 android:textSize="12dp"
                 android:textStyle="italic"
                 android:visibility="gone" />

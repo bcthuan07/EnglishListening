@@ -17,10 +17,10 @@ import java.io.IOException;
  */
 public class SingleArticleWorkTask extends AsyncTask<String, Void, Article> {
 
-    private OnTaskComplete onTaskComplete;
+    private ArticleLoaded listener;
 
-    public SingleArticleWorkTask(OnTaskComplete onTaskComplete) {
-        this.onTaskComplete = onTaskComplete;
+    public SingleArticleWorkTask(ArticleLoaded listener) {
+        this.listener = listener;
     }
 
     @Override
@@ -61,7 +61,10 @@ public class SingleArticleWorkTask extends AsyncTask<String, Void, Article> {
 
     @Override
     protected void onPostExecute(Article article) {
-        super.onPostExecute(article);
-        onTaskComplete.onCompleteTask(article);
+        listener.getArticle(article);
+    }
+
+    public interface ArticleLoaded {
+        void getArticle(Article article);
     }
 }
