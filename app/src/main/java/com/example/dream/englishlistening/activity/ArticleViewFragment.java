@@ -273,6 +273,7 @@ public class ArticleViewFragment extends Fragment implements MediaPlayer.OnCompl
                     }
                 }
             };
+            play.run();
 
         } else {
 
